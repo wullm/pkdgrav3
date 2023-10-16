@@ -233,6 +233,10 @@ void pstAddServices(PST pst,MDL mdl) {
 #endif
     mdlAddService(mdl,PST_TOTALMASS,pst,(fcnService_t*)pstTotalMass,
 		  0, sizeof(struct outTotalMass));
+    mdlAddService(mdl,PST_COUNTSPECIES,pst,(fcnService_t*)pstCountSpecies,
+		  0, sizeof(struct outGetNParts));
+    mdlAddService(mdl,PST_SETWRITESPECIESCOUNTS,pst,(fcnService_t*)pstSetWriteSpeciesCounts,
+		  sizeof(struct inWriteSpeciesCounts), 0);
     mdlAddService(mdl,PST_LIGHTCONE_OPEN,pst,(fcnService_t*)pstLightConeOpen,
 		  sizeof(struct inLightConeOpen), 0);
     mdlAddService(mdl,PST_LIGHTCONE_CLOSE,pst,(fcnService_t*)pstLightConeClose,
@@ -662,9 +666,8 @@ int pstWrite(PST pst,void *vin,int nIn,void *vout,int nOut) {
 	    else {
 		if (strstr(in->achOutFile, "&I" )) {
 		    makeName(achOutFile,in->achOutFile,in->iIndex,"");
-		    fio = fioTipsyCreatePart(achOutFile,0,in->mFlags&FIO_FLAG_CHECKPOINT,
-			in->bStandard, in->dTime, 
-			in->nSph, in->nDark, in->nStar, plcl->nWriteStart);
+            fio = fioTipsyCreate(achOutFile,in->mFlags&FIO_FLAG_CHECKPOINT,
+			in->bStandard, in->dTime, plcl->nGas, plcl->nDark, plcl->nStar);
 		    }
 		else {
 		    fio = fioTipsyAppend(in->achOutFile,in->mFlags&FIO_FLAG_CHECKPOINT,in->bStandard);
@@ -1932,6 +1935,67 @@ int pstTotalMass(PST pst,void *vin,int nIn,void *vout,int nOut) {
 	out->dMass = pkdTotalMass(plcl->pkd);
 	}
     return sizeof(struct outTotalMass);
+    }
+
+int pstSetWriteSpeciesCounts(PST pst,void *vin,int nIn,void *vout,int nOut) {
+    LCL *plcl = pst->plcl;
+    struct inWriteSpeciesCounts *in = vin;
+
+    if (pst->nLeaves > 1) {
+    int nProcessors = in->nProcessors;
+	/* If we are the writer or a producer (nProcessors==1), record the count */
+	if (nProcessors<=1) {
+        plcl->nGas = pst->nGas;
+        plcl->nDark = pst->nDark;
+        plcl->nStar = pst->nStar;
+    }
+	/* Split tasks between child nodes */
+	else {
+	    int nLeft = nProcessors / 2;
+	    assert(in->iLower == mdlSelf(pst->mdl));
+	    in->iLower = pst->idUpper;
+	    in->nProcessors -= nLeft;
+	    in->iIndex += nLeft;
+	    int rID = mdlReqService(pst->mdl,pst->idUpper,PST_SETWRITESPECIESCOUNTS,in,nIn);
+	    in->iLower = mdlSelf(pst->mdl);
+	    in->iUpper = pst->idUpper;
+	    in->iIndex -= nLeft;
+	    in->nProcessors = nLeft;
+	    pstSetWriteSpeciesCounts(pst->pstLower,in,nIn,NULL,0);
+	    mdlGetReply(pst->mdl,rID,NULL,NULL);
+	    }
+	}
+    return 0;
+    }
+
+int pstCountSpecies(PST pst,void *vin,int nIn,void *vout,int nOut) {
+    LCL *plcl = pst->plcl;
+    struct outGetNParts *out = vout;
+    struct outGetNParts outUpper;
+    bzero(&outUpper, sizeof(outUpper));
+
+    if (pst->nLeaves > 1) {
+        int rID = mdlReqService(pst->mdl,pst->idUpper,PST_COUNTSPECIES,NULL,0);
+        pstCountSpecies(pst->pstLower,NULL,0,out,nOut);
+        mdlGetReply(pst->mdl,rID,&outUpper,&nOut);
+        assert(nOut==sizeof(struct outGetNParts));
+        out->n += outUpper.n;
+        out->nGas += outUpper.nGas;
+        out->nDark += outUpper.nDark;
+        out->nStar += outUpper.nStar;
+        out->nMaxOrder = (outUpper.nMaxOrder > out->nMaxOrder) ? outUpper.nMaxOrder : out->nMaxOrder;
+
+        pst->nGas = out->nGas;
+        pst->nDark = out->nDark;
+        pst->nStar = out->nStar;
+	}
+    else {
+        pkdGetNParts(plcl->pkd, out);
+        pst->nGas = out->nGas;
+        pst->nDark = out->nDark;
+        pst->nStar = out->nStar;
+	}
+    return sizeof(struct outGetNParts);
     }
 
 int pstLightConeOpen(PST pst,void *vin,int nIn,void *vout,int nOut) {

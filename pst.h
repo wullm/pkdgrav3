@@ -49,6 +49,9 @@ typedef struct lclBlock {
     double fHigh;
     int nSplit;
     uint64_t nWriteStart;
+    uint64_t nGas;
+    uint64_t nDark;
+    uint64_t nStar;
     PKDOUT pkdout;
     } LCL;
 
@@ -68,6 +71,9 @@ typedef struct pstContext {
     double fSplit;
     double fSplitInactive;
     uint64_t nTotal;
+    uint64_t nGas;
+    uint64_t nDark;
+    uint64_t nStar;
     } * PST;
 
 
@@ -218,6 +224,8 @@ enum pst_service {
     PST_BISPECTRUM_SELECT,
     PST_BISPECTRUM_CALCULATE,
     PST_TOTALMASS,
+    PST_COUNTSPECIES,
+    PST_SETWRITESPECIESCOUNTS,
     PST_LIGHTCONE_OPEN,
     PST_LIGHTCONE_CLOSE,
     PST_LIGHTCONEVEL,
@@ -1036,6 +1044,18 @@ struct outTotalMass {
     double dMass;
     };
 int pstTotalMass(PST pst,void *vin,int nIn,void *vout,int nOut);
+
+/* PST_COUNTSPECIES */
+int pstCountSpecies(PST pst,void *vin,int nIn,void *vout,int nOut);
+
+/* PST_SETWRITESPECIESCOUNTS */
+struct inWriteSpeciesCounts {
+    int iIndex;
+    int nProcessors;
+    int iLower, iUpper;
+    int iTarget;
+    };
+int pstSetWriteSpeciesCounts(PST,void *,int,void *,int);
 
 struct inLightConeOpen {
     int nSideHealpix;

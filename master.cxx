@@ -56,7 +56,7 @@
 #endif
 #include <sys/stat.h>
 #include <algorithm>
-#include <functional>
+// #include <functional>
 #include <fstream>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h> /* for MAXHOSTNAMELEN, if available */
@@ -1632,6 +1632,13 @@ void MSR::Write(const char *pszFileName,double dTime,int bCheckpoint) {
     MSR::MakePath(param.achDataSubPath,pszFileName,achOutFile);
 
     /*
+    ** Count the number of particles per species
+    */
+    struct outGetNParts counts;
+    bzero(&counts, sizeof(counts));
+    pstCountSpecies(pst, NULL, 0, &counts, sizeof(counts));
+
+    /*
     ** If bParaWrite is 0, then we write serially; if it is 1, then we write
     ** in parallel using all available threads, otherwise we write in parallel
     ** using the specified number of threads.  The latter option will reduce
@@ -1639,6 +1646,17 @@ void MSR::Write(const char *pszFileName,double dTime,int bCheckpoint) {
     ** handle it.
     */
     nProcessors = param.bParaWrite==0?1:(param.nParaWrite<=1 ? nThreads:param.nParaWrite);
+
+    /*
+    ** Determine the number of particles per species per parallel writer.
+    ** This requires recursing in the same way as pstWrite
+    */
+    struct inWriteSpeciesCounts countsIn;
+    countsIn.iLower = 0;
+    countsIn.iUpper = nThreads;
+    countsIn.iIndex = 0;
+    countsIn.nProcessors = nProcessors;
+    pstSetWriteSpeciesCounts(pst,&countsIn,sizeof(countsIn),NULL,0);
 
     if (csm->val.bComove) {
 	dExp = csmTime2Exp(csm,dTime);
