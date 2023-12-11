@@ -4170,7 +4170,7 @@ void MSR::OutputDeltaX(int iStep,double dTime) {
     sec = MSR::Time();
     printf("Measuring delta(x) with grid size %d...\n",param.nGridPk);
 
-    AssignMass(iAssignment,0,0.0);
+    AssignMass(param.iPkOrder,0,0.0);
     DensityContrast(0, false);
 
     dsec = MSR::Time() - sec;
