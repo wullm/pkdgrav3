@@ -837,6 +837,9 @@ void MSR::Initialize() {
     param.nGridPk = 0;
     prmAddParam(prm,"nGridPk",1,&param.nGridPk,
 		sizeof(int),"pk","<Grid size for measure P(k) 0=disabled> = 0");
+    param.nGridDeltaX = 0;
+    prmAddParam(prm,"nGridDeltaX",1,&param.nGridDeltaX,
+		sizeof(int),"ndx","<Grid size for measuring delta(x) 0=disabled> = 0");
     param.bPkInterlace = 1;
     prmAddParam(prm,"bPkInterlace",0,&param.bPkInterlace,
 		sizeof(int),"pkinterlace","<Use interlacing to measure P(k)> = +pkinterlace");
@@ -4153,22 +4156,33 @@ void MSR::OutputPk(int iStep,double dTime) {
     }
 
 void MSR::OutputDeltaX(int iStep,double dTime) {
+    double sec,dsec;
     double a, z, vfact, kfact;
     std::string filename;
     int i;
 
-    if (param.nGridPk == 0) return;
+    if (param.nGridDeltaX == 0) return;
+    if (!(param.iDeltaxInterval && (iStep % param.iDeltaxInterval == 0) && z < param.dDeltaxRedshift)) return;
 
     if (!csm->val.bComove) a = 1.0;
     else a = csmTime2Exp(csm,dTime);
-
-    MeasureDeltaX(param.iPkOrder,param.nGridPk,a);
-
     z = 1/a - 1;
-    if (param.iDeltaxInterval && (iStep % param.iDeltaxInterval == 0) && z < param.dDeltaxRedshift) {
+
+    GridCreateFFT(param.nGridDeltaX);
+
+    sec = MSR::Time();
+    printf("Measuring delta(x) with grid size %d...\n",nGrid);
+
+    AssignMass(iAssignment,0,0.0);
+    DensityContrast(0, false);
+
+    dsec = MSR::Time() - sec;
+    printf("delta(x) Calculated, Wallclock: %f secs\n\n",dsec);
+
     auto filename = BuildName(iStep,".deltax");
     OutputGrid(filename.c_str(),false,0,param.bParaWrite==0?1:(param.nParaWrite<=1 ? nThreads:param.nParaWrite));
-    }
+
+    GridDeleteFFT();
     }
 
 void MSR::OutputLinPk(int iStep,double dTime) {
@@ -4680,25 +4694,6 @@ void MSR::MeasurePk(int iAssignment,int bInterlace,int nGrid,double a,int nBins,
     dsec = MSR::Time() - sec;
     printf("P(k) Calculated, Wallclock: %f secs\n\n",dsec);
     }
-
-/* Important: call msrGridCreateFFT() before, and msrGridDeleteFFT() after */
-void MSR::MeasureDeltaX(int iAssignment,int nGrid,double a) {
-    double sec,dsec;
-
-    GridCreateFFT(nGrid);
-
-    sec = MSR::Time();
-    printf("Measuring delta(x) with grid size %d...\n",nGrid);
-
-    AssignMass(iAssignment,0,0.0);
-    DensityContrast(0, false);
-
-    GridDeleteFFT();
-
-    dsec = MSR::Time() - sec;
-    printf("delta(x) Calculated, Wallclock: %f secs\n\n",dsec);
-    }
-
 
 void MSR::MeasureLinPk(int nGrid, double dA, double dBoxSize,
                     uint64_t *nPk,float *fK,float *fPk) {
