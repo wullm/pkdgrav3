@@ -4176,7 +4176,7 @@ void MSR::OutputDeltaX(int iStep,double dTime) {
     dsec = MSR::Time() - sec;
     printf("delta(x) Calculated, Wallclock: %f secs\n\n",dsec);
 
-    auto filename = BuildName(iStep,".deltax");
+    filename = BuildName(iStep,".deltax");
     OutputGrid(filename.c_str(),false,0,param.bParaWrite==0?1:(param.nParaWrite<=1 ? nThreads:param.nParaWrite));
 
     GridDeleteFFT();
