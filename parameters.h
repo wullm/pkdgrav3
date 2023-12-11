@@ -200,7 +200,6 @@ struct parameters {
 
 #ifdef MDL_FFTW
     int nGridPk;
-    int nGridDeltaX;
     int bPkInterlace;
     int iPkOrder;
     int nBinsPk;

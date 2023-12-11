@@ -837,9 +837,6 @@ void MSR::Initialize() {
     param.nGridPk = 0;
     prmAddParam(prm,"nGridPk",1,&param.nGridPk,
 		sizeof(int),"pk","<Grid size for measure P(k) 0=disabled> = 0");
-    param.nGridDeltaX = 0;
-    prmAddParam(prm,"nGridDeltaX",1,&param.nGridDeltaX,
-		sizeof(int),"ndx","<Grid size for measuring delta(x) 0=disabled> = 0");
     param.bPkInterlace = 1;
     prmAddParam(prm,"bPkInterlace",0,&param.bPkInterlace,
 		sizeof(int),"pkinterlace","<Use interlacing to measure P(k)> = +pkinterlace");
@@ -4161,17 +4158,17 @@ void MSR::OutputDeltaX(int iStep,double dTime) {
     std::string filename;
     int i;
 
-    if (param.nGridDeltaX == 0) return;
+    if (param.nGridPk == 0) return;
     if (!(param.iDeltaxInterval && (iStep % param.iDeltaxInterval == 0) && z < param.dDeltaxRedshift)) return;
 
     if (!csm->val.bComove) a = 1.0;
     else a = csmTime2Exp(csm,dTime);
     z = 1/a - 1;
 
-    GridCreateFFT(param.nGridDeltaX);
+    GridCreateFFT(param.nGridPk);
 
     sec = MSR::Time();
-    printf("Measuring delta(x) with grid size %d...\n",nGrid);
+    printf("Measuring delta(x) with grid size %d...\n",param.nGridPk);
 
     AssignMass(iAssignment,0,0.0);
     DensityContrast(0, false);

@@ -56,7 +56,6 @@ def parse():
     aparm = parser.add_argument_group('Analysis')
     add_flag(aparm,'npk',default=None,dest='nBinsPk',type=int, help='Number of log bins for P(k)')
     add_flag(aparm,'pk',default=0,dest='nGridPk',type=int, help='Grid size for measure P(k) 0=disabled')
-    add_flag(aparm,'ndx',default=0,dest='nGridDeltaX',type=int, help='Grid size for measuring delta(x) 0=disabled')
     add_bool(aparm,'pkinterlace',default=True,dest='bPkInterlace',help='Use interlacing to measure P(k)')
     add_flag(aparm,'pko',default=4,dest='iPkOrder',type=int, help='Mass assignment order for measuring P(k)')
     add_bool(aparm,'groupfinder',default=False,dest='bFindGroups',help='enable group finder')
