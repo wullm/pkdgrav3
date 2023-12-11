@@ -68,6 +68,7 @@ def parse():
     add_bool(aparm,'lc',default=False,dest='bLightCone',help='output light cone data')
     add_flag(aparm,'zlcp',default=0,dest='dRedshiftLCP',type=float, help='starting redshift to output light cone particles')
     add_flag(aparm,'zdel',default=0,dest='dDeltakRedshift',type=float, help='starting redshift to output delta(k) field')
+    add_flag(aparm,'zdelx',default=0,dest='dDeltaxRedshift',type=float, help='starting redshift to output delta(x) field')
     add_flag(aparm,'healpix',default=8192,dest='nSideHealpix',type=int, help='Number per side of the healpix map')
     add_bool(aparm,'lcp',default=False,dest='bLightConeParticles',help='output light cone particles')
 
@@ -89,6 +90,7 @@ def parse():
     add_flag(ioparm,'ol',default=1,dest='iLogInterval',type=int, help='number of timesteps between logfile outputs')
     add_flag(ioparm,'opk',default=1,dest='iPkInterval',type=int, help='number of timesteps between pk outputs')
     add_flag(ioparm,'odk',default=0,dest='iDeltakInterval', type=int, help='number of timesteps between DeltaK outputs')
+    add_flag(ioparm,'odx',default=0,dest='iDeltaxInterval', type=int, help='number of timesteps between DeltaX outputs')
     add_bool(ioparm,'hdf5',default=False,dest='bHDF5', help='output in HDF5 format')
     add_bool(ioparm,'dp',default=False,dest='bDoublePos', help='input/output double precision positions (standard format only)')
     add_bool(ioparm,'dv',default=False,dest='bDoubleVel', help='input/output double precision velocities (standard format only)')

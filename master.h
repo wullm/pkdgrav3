@@ -104,6 +104,7 @@ public:
     void GroupStats();
     void HopWrite(const char *fname);
     void MeasurePk(int iAssignment,int bInterlace,int nGrid,double a,int nBins,uint64_t *nPk,float *fK,float *fPk,float *fPkAll);
+    void MeasureDeltaX(int iAssignment,int nGrid,double a);
     void AssignMass(int iAssignment=4,int iGrid=0,float fDelta=0.0f);
     void DensityContrast(int nGrid,bool k=true);
     void WindowCorrection(int iAssignment,int iGrid);
@@ -334,6 +335,7 @@ protected:
 
     void MeasureLinPk(int nGridLin,double a,double dBoxSize, uint64_t *nPk,float *fK,float *fPk);
     void OutputPk(int iStep,double dTime);
+    void OutputDeltaX(int iStep,double dTime);
     void OutputLinPk(int iStep, double dTime);
 
     int NewTopStepKDK(

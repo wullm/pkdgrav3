@@ -207,7 +207,9 @@ struct parameters {
     int bDoLinPkOutput;
     int nBinsLinPk;
     int iDeltakInterval;
+    int iDeltaxInterval;
   double dDeltakRedshift;
+  double dDeltaxRedshift;
 #endif
 
     /*
