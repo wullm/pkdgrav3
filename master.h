@@ -334,6 +334,7 @@ protected:
 
     void MeasureLinPk(int nGridLin,double a,double dBoxSize, uint64_t *nPk,float *fK,float *fPk);
     void OutputPk(int iStep,double dTime);
+    void OutputDeltaX(int iStep,double dTime);
     void OutputLinPk(int iStep, double dTime);
 
     int NewTopStepKDK(

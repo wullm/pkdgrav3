@@ -539,9 +539,15 @@ void MSR::Initialize() {
     param.iDeltakInterval = 0;
     prmAddParam(prm,"iDeltakInterval",1,&param.iDeltakInterval,sizeof(int),
 		"odk","<number of timesteps between DeltaK outputs> = 0 (off)");
+    param.iDeltaxInterval = 0;
+    prmAddParam(prm,"iDeltaxInterval",1,&param.iDeltaxInterval,sizeof(int),
+		"odx","<number of timesteps between DeltaX outputs> = 0 (off)");
     param.dDeltakRedshift = 2.0;
     prmAddParam(prm,"dDeltakRedshift",2,&param.dDeltakRedshift,sizeof(double),"zdel",
 		"starting redshift to output delta(k) field = 2.0");
+    param.dDeltaxRedshift = 2.0;
+    prmAddParam(prm,"dDeltaxRedshift",2,&param.dDeltaxRedshift,sizeof(double),"zdelx",
+		"starting redshift to output delta(x) field = 2.0");
     param.bEwald = 1;
     prmAddParam(prm,"bEwald",0,&param.bEwald,sizeof(int),"ewald",
 		"enable/disable Ewald correction = +ewald");
@@ -3231,6 +3237,15 @@ int MSR::NewTopStepKDK(
 
 	if (param.iPkInterval && iStep%param.iPkInterval == 0) OutputPk(iStep,dTime);
 
+    double a,z;
+    if (!csm->val.bComove) a = 1.0;
+    else a = csmTime2Exp(csm,dTime);
+    z = 1/a - 1;
+
+    if (param.iDeltaxInterval && (iStep % param.iDeltaxInterval == 0) && z < param.dDeltaxRedshift) {
+        OutputDeltaX(iStep,dTime);
+    }
+
 	/*
 	** We need to write all light cone files (healpix and LCP) at this point before the last
 	** gravity is called since it will advance the particles in the light cone as part of the
@@ -4135,6 +4150,36 @@ void MSR::OutputPk(int iStep,double dTime) {
 	auto filename = BuildName(iStep,".deltak");
 	OutputGrid(filename.c_str(),true,0,param.bParaWrite==0?1:(param.nParaWrite<=1 ? nThreads:param.nParaWrite));
 	}
+    }
+
+void MSR::OutputDeltaX(int iStep,double dTime) {
+    double sec,dsec;
+    double a, z, vfact, kfact;
+    std::string filename;
+    int i;
+
+    if (param.nGridPk == 0) return;
+    if (!(param.iDeltaxInterval && (iStep % param.iDeltaxInterval == 0) && z < param.dDeltaxRedshift)) return;
+
+    if (!csm->val.bComove) a = 1.0;
+    else a = csmTime2Exp(csm,dTime);
+    z = 1/a - 1;
+
+    GridCreateFFT(param.nGridPk);
+
+    sec = MSR::Time();
+    printf("Measuring delta(x) with grid size %d...\n",param.nGridPk);
+
+    AssignMass(param.iPkOrder,0,0.0);
+    DensityContrast(0, false);
+
+    dsec = MSR::Time() - sec;
+    printf("delta(x) Calculated, Wallclock: %f secs\n\n",dsec);
+
+    filename = BuildName(iStep,".deltax");
+    OutputGrid(filename.c_str(),false,0,param.bParaWrite==0?1:(param.nParaWrite<=1 ? nThreads:param.nParaWrite));
+
+    GridDeleteFFT();
     }
 
 void MSR::OutputLinPk(int iStep,double dTime) {
